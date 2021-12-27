@@ -1,22 +1,23 @@
 package data_analyzer.spark_api
 
 import data_analyzer.provider._
-import org.apache.spark.sql.{DataFrame}
+import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.types.IntegerType
 
-object VideogameIncomeAnalyzer extends App
+object VideoGameIncomeAnalyzer extends App
   with SparkSessionProviderComponent
-  with VideogameIncomeAnalyzerDataset {
+  with VideoGameIncomeAnalyzerDataset {
 
   override def sparkSessionProvider = new DefaultSparkSessionProvider("IncomeAnalyzer")
 
-  genreIncome("vgsales.csv")
-  platformIncome("vgsales.csv")
+  val path: String = "vgsales.csv"
+
+  genreIncome(path)
+  platformIncome(path)
 
 }
 
-trait VideogameIncomeAnalyzerDataset {
+trait VideoGameIncomeAnalyzerDataset {
   this: SparkSessionProviderComponent =>
 
   private val sparkSession = sparkSessionProvider.sparkSession
@@ -31,9 +32,9 @@ trait VideogameIncomeAnalyzerDataset {
     val columnToSum = List(dfGenreIncome("NA_Sales"), dfGenreIncome("EU_Sales"), dfGenreIncome("JP_Sales"), dfGenreIncome("Other_Sales"))
 
     val genreIncome = dfGenreIncome
-      .withColumn("allRegionSales($M)", round(columnToSum.reduce(_ + _)).cast(IntegerType))
+      .withColumn("allRegionSales($M)", columnToSum.reduce(_ + _))
       .groupBy("Genre")
-      .agg(sum("allRegionSales($M)").as("allRegionSales($M)"))
+      .agg(rint(sum("allRegionSales($M)")).as("allRegionSales($M)"))
       .select("Genre", "allRegionSales($M)")
       .sort(desc("allRegionSales($M)"))
 
@@ -48,9 +49,9 @@ trait VideogameIncomeAnalyzerDataset {
     val columnToSum = List(dfGenreIncome("NA_Sales"), dfGenreIncome("EU_Sales"), dfGenreIncome("JP_Sales"), dfGenreIncome("Other_Sales"))
 
     val platformIncome = dfGenreIncome
-      .withColumn("allRegionSales($M)", round(columnToSum.reduce(_ + _)).cast(IntegerType))
+      .withColumn("allRegionSales($M)", columnToSum.reduce(_ + _))
       .groupBy("Platform")
-      .agg(sum("allRegionSales($M)").as("allRegionSales($M)"))
+      .agg(rint(sum("allRegionSales($M)")).as("allRegionSales($M)"))
       .select("Platform", "allRegionSales($M)")
       .sort(desc("allRegionSales($M)"))
 
